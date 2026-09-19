@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
-import type { SacramentMeeting } from '@/lib/types';
-import { getBaseUrl } from '@/lib/base-url';
+import { getMeetingById } from '@/lib/meetings-db';
 import MeetingDetail from '@/components/MeetingDetail';
 
 export const dynamic = 'force-dynamic';
@@ -11,13 +10,16 @@ export default async function MeetingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const baseUrl = await getBaseUrl();
-  const res = await fetch(`${baseUrl}/api/meetings/${id}`, { cache: 'no-store' });
+  const numericId = Number(id);
 
-  if (!res.ok) {
+  if (!Number.isInteger(numericId)) {
     notFound();
   }
 
-  const meeting: SacramentMeeting = await res.json();
+  const meeting = await getMeetingById(numericId);
+  if (!meeting) {
+    notFound();
+  }
+
   return <MeetingDetail meeting={meeting} />;
 }

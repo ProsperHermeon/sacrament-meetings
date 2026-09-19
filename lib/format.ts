@@ -5,13 +5,14 @@ const MEETING_TYPE_LABELS: Record<MeetingType, string> = {
   regular: 'Sacrament Meeting',
   stake: 'Stake Meeting',
   general: 'General Meeting',
+  special: 'Special Meeting',
 };
 
 export function meetingTypeLabel(type: MeetingType): string {
-  return MEETING_TYPE_LABELS[type];
+  return MEETING_TYPE_LABELS[type] ?? type;
 }
 
-/** Format an ISO date (YYYY-MM-DD) as e.g. "Sunday, May 3, 2026" without timezone drift. */
+// Format an ISO date (YYYY-MM-DD) as e.g. "Sunday, May 3, 2026" without timezone drift.
 export function formatMeetingDate(iso: string): string {
   const [year, month, day] = iso.split('-').map(Number);
   const date = new Date(year, month - 1, day);
