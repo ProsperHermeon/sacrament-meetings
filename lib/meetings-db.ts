@@ -5,7 +5,9 @@ const sql = neon(process.env.DATABASE_URL!);
 
 export const PAGE_SIZE = 5;
 
-// Raw shape of a row returned from the meetings table (snake_case columns).
+// Fields needed to create or update a meeting (everything except the id).
+export type MeetingInput = Omit<SacramentMeeting, 'id'>;
+
 interface MeetingRow {
   id: number;
   date: string | Date;
@@ -23,7 +25,6 @@ interface MeetingRow {
   closing_prayer: string;
 }
 
-// Map a database row (snake_case, JSONB) onto the SacramentMeeting type.
 function mapRow(row: MeetingRow): SacramentMeeting {
   const date =
     typeof row.date === 'string'
@@ -54,9 +55,6 @@ interface GetMeetingsOptions {
   page?: number;
 }
 
-// Read meetings. Supports an exact date filter (used by the API), a text search
-// across presiding, conducting, meeting type, and speaker names, and optional
-// pagination (PAGE_SIZE per page) when a page number is supplied.
 export async function getMeetings(
   options: GetMeetingsOptions = {}
 ): Promise<SacramentMeeting[]> {
@@ -95,7 +93,6 @@ export async function getMeetings(
   return rows.map(mapRow);
 }
 
-// Count meetings matching a search query (for pagination controls).
 export async function getMeetingsCount(query?: string): Promise<number> {
   const like = `%${query ?? ''}%`;
   const rows = (await sql`
@@ -108,7 +105,6 @@ export async function getMeetingsCount(query?: string): Promise<number> {
   return rows[0]?.count ?? 0;
 }
 
-// Read a single meeting by id.
 export async function getMeetingById(
   id: number
 ): Promise<SacramentMeeting | undefined> {
@@ -118,7 +114,6 @@ export async function getMeetingById(
   return rows[0] ? mapRow(rows[0]) : undefined;
 }
 
-// Return the meeting on or most recently before today; otherwise the earliest upcoming one.
 export async function getCurrentMeeting(): Promise<
   SacramentMeeting | undefined
 > {
@@ -133,21 +128,49 @@ export async function getCurrentMeeting(): Promise<
   return upcoming[0] ? mapRow(upcoming[0]) : undefined;
 }
 
-// --- Mutations: wired to the database in Week 04. Stubs for now. ---
+// --- Mutations (live SQL) ---
 
-export async function addMeeting(
-  _meeting: Omit<SacramentMeeting, 'id'>
-): Promise<SacramentMeeting> {
-  throw new Error('addMeeting is not implemented until Week 04.');
+export async function createMeeting(data: MeetingInput): Promise<void> {
+  await sql`
+    INSERT INTO meetings (
+      date, meeting_type, presiding, conducting, announcements,
+      opening_hymn, opening_prayer, ward_business, stake_business,
+      sacrament_hymn, speakers, closing_hymn, closing_prayer
+    ) VALUES (
+      ${data.date}, ${data.meetingType}, ${data.presiding}, ${data.conducting},
+      ${data.announcements ?? []},
+      ${JSON.stringify(data.openingHymn)}::jsonb, ${data.openingPrayer},
+      ${JSON.stringify(data.wardBusiness)}::jsonb, ${data.stakeBusiness},
+      ${JSON.stringify(data.sacramentHymn)}::jsonb,
+      ${JSON.stringify(data.speakers)}::jsonb,
+      ${JSON.stringify(data.closingHymn)}::jsonb, ${data.closingPrayer}
+    )
+  `;
 }
 
 export async function updateMeeting(
-  _id: number,
-  _meeting: Partial<SacramentMeeting>
-): Promise<SacramentMeeting> {
-  throw new Error('updateMeeting is not implemented until Week 04.');
+  id: number,
+  data: MeetingInput
+): Promise<void> {
+  await sql`
+    UPDATE meetings SET
+      date = ${data.date},
+      meeting_type = ${data.meetingType},
+      presiding = ${data.presiding},
+      conducting = ${data.conducting},
+      announcements = ${data.announcements ?? []},
+      opening_hymn = ${JSON.stringify(data.openingHymn)}::jsonb,
+      opening_prayer = ${data.openingPrayer},
+      ward_business = ${JSON.stringify(data.wardBusiness)}::jsonb,
+      stake_business = ${data.stakeBusiness},
+      sacrament_hymn = ${JSON.stringify(data.sacramentHymn)}::jsonb,
+      speakers = ${JSON.stringify(data.speakers)}::jsonb,
+      closing_hymn = ${JSON.stringify(data.closingHymn)}::jsonb,
+      closing_prayer = ${data.closingPrayer}
+    WHERE id = ${id}
+  `;
 }
 
-export async function deleteMeeting(_id: number): Promise<void> {
-  throw new Error('deleteMeeting is not implemented until Week 04.');
+export async function deleteMeeting(id: number): Promise<void> {
+  await sql`DELETE FROM meetings WHERE id = ${id}`;
 }

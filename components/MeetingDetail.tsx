@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import type { SacramentMeeting } from '@/lib/types';
 import { formatMeetingDate, meetingTypeLabel } from '@/lib/format';
+import { deleteMeeting } from '@/lib/actions';
 import PrintButton from './PrintButton';
 
 interface MeetingDetailProps {
@@ -121,6 +123,23 @@ export default function MeetingDetail({ meeting }: MeetingDetailProps) {
 
       <div className="mt-10 flex justify-center">
         <PrintButton />
+      </div>
+
+      <div className="mt-6 flex items-center justify-center gap-4 print:hidden">
+        <Link
+          href={`/meetings/${meeting.id}/edit`}
+          className="rounded border border-[var(--line)] px-4 py-2 text-sm text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+        >
+          Edit
+        </Link>
+        <form action={deleteMeeting.bind(null, meeting.id)}>
+          <button
+            type="submit"
+            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 transition-colors hover:border-red-500 hover:bg-red-50"
+          >
+            Delete
+          </button>
+        </form>
       </div>
     </article>
   );
