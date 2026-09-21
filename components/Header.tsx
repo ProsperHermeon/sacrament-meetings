@@ -1,8 +1,12 @@
+import Link from 'next/link';
 import NavLinks from './NavLinks';
+import { auth, signOut } from '@/auth';
 
 const WARD_NAME = 'Riverside Ward';
 
-export default function Header() {
+export default async function Header() {
+  const session = await auth();
+
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -19,7 +23,31 @@ export default function Header() {
           </p>
           <p className="mt-1 text-sm text-[var(--muted)]">{today}</p>
         </div>
-        <NavLinks />
+        <div className="flex items-center gap-6">
+          <NavLinks />
+          {session?.user ? (
+            <form
+              action={async () => {
+                'use server';
+                await signOut({ redirectTo: '/' });
+              }}
+            >
+              <button
+                type="submit"
+                className="text-sm text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
+              >
+                Sign out
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
+            >
+              Sign in
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );

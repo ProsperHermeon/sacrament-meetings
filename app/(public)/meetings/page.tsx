@@ -1,9 +1,16 @@
 import { getMeetings, getMeetingsCount, PAGE_SIZE } from '@/lib/meetings-db';
+import type { Metadata } from 'next';
 import MeetingCard from '@/components/MeetingCard';
 import MeetingSearch from '@/components/MeetingSearch';
 import Pagination from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'All Meetings',
+  description:
+    'Browse and search all sacrament meeting programs by speaker, presiding, or meeting type.',
+};
 
 export default async function MeetingsPage({
   searchParams,
